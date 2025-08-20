@@ -1,4 +1,4 @@
-# app.py (versión mejorada con carga de archivos)
+# app.py (versión mejorada con carga de archivos y visualización del árbol)
 
 import streamlit as st
 import pandas as pd
@@ -6,10 +6,13 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 import plotly.express as px
+import graphviz
+import pydotplus
+from io import StringIO
 
 # --- Configuración de la página ---
 st.set_page_config(
@@ -55,6 +58,10 @@ if uploaded_file is not None:
         # Convertir a numpy arrays
         X = X.to_numpy()
         y = y.to_numpy()
+        
+        # Obtener los nombres de las características y las clases
+        feature_names = data.drop(columns=[target_column]).columns
+        class_names = [str(c) for c in y.unique()]
 
     except Exception as e:
         st.error(f"Error al leer el archivo. Asegúrate de que es un archivo CSV válido. Error: {e}")
@@ -73,6 +80,10 @@ else:
     data = pd.DataFrame(X, columns=[f'feature_{i+1}' for i in range(n_features)])
     data['target'] = y
     st.info(f"Se ha creado un conjunto de datos simulado con **{n_samples} muestras** y **{n_features} columnas**.")
+
+    # Obtener los nombres de las características y las clases
+    feature_names = data.columns[:-1]
+    class_names = ['Clase 0', 'Clase 1']
 
 # Sección de EDA
 with st.expander("🔎 Análisis Exploratorio de Datos (EDA)", expanded=False):
@@ -138,6 +149,25 @@ results_df = pd.DataFrame(results.items(), columns=['Modelo', 'Precisión'])
 results_df['Precisión'] = results_df['Precisión'].apply(lambda x: f"{x:.2%}")
 st.table(results_df.style.highlight_max(axis=0))
 st.success("¡El modelo con mayor precisión ha sido resaltado!")
+st.markdown("---")
+
+# --- Visualización del Árbol de Decisión ---
+st.header("4. Visualización del Árbol de Decisión")
+st.info("Explora la estructura del Árbol de Decisión y cómo toma sus predicciones.")
+
+dot_data = StringIO()
+export_graphviz(
+    decision_tree, 
+    out_file=dot_data,  
+    filled=True, 
+    rounded=True,
+    special_characters=True,
+    feature_names=feature_names,
+    class_names=class_names
+)
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+st.graphviz_chart(graph.to_string())
+
 st.markdown("---")
 
 # --- Conclusión ---
