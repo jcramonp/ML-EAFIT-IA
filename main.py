@@ -52,16 +52,16 @@ if uploaded_file is not None:
         target_column = st.selectbox("Selecciona la columna objetivo", options=data.columns)
         
         # Separar características (X) y objetivo (y)
-        X = data.drop(columns=[target_column])
-        y = data[target_column]
-
-        # Convertir a numpy arrays
-        X = X.to_numpy()
-        y = y.to_numpy()
+        X_df = data.drop(columns=[target_column])
+        y_series = data[target_column]
         
         # Obtener los nombres de las características y las clases
-        feature_names = data.drop(columns=[target_column]).columns
-        class_names = [str(c) for c in y.unique()]
+        feature_names = X_df.columns.tolist()
+        class_names = [str(c) for c in y_series.unique()]
+
+        # Convertir a numpy arrays para el entrenamiento
+        X = X_df.to_numpy()
+        y = y_series.to_numpy()
 
     except Exception as e:
         st.error(f"Error al leer el archivo. Asegúrate de que es un archivo CSV válido. Error: {e}")
@@ -82,7 +82,7 @@ else:
     st.info(f"Se ha creado un conjunto de datos simulado con **{n_samples} muestras** y **{n_features} columnas**.")
 
     # Obtener los nombres de las características y las clases
-    feature_names = data.columns[:-1]
+    feature_names = data.columns[:-1].tolist()
     class_names = ['Clase 0', 'Clase 1']
 
 # Sección de EDA
@@ -98,16 +98,12 @@ with st.expander("🔎 Análisis Exploratorio de Datos (EDA)", expanded=False):
 
     st.subheader("Gráfico de Dispersión de Características")
     # Gráfico interactivo para ver la relación entre dos características
-    features_list = data.columns.tolist()
-    if uploaded_file is not None:
-        features_list.remove(target_column)
-
-    if len(features_list) > 1:
+    if len(feature_names) > 1:
         col1, col2 = st.columns(2)
         with col1:
-            feature_x = st.selectbox("Eje X", options=features_list)
+            feature_x = st.selectbox("Eje X", options=feature_names)
         with col2:
-            feature_y = st.selectbox("Eje Y", options=features_list, index=1)
+            feature_y = st.selectbox("Eje Y", options=feature_names, index=1)
 
         fig = px.scatter(data, x=feature_x, y=feature_y, color=data.columns[-1],
                          title=f'Dispersión de {feature_x} vs {feature_y}')
