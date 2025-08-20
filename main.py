@@ -45,6 +45,14 @@ if uploaded_file is not None:
     # Si se sube un archivo, usa esos datos
     try:
         data = pd.read_csv(uploaded_file)
+        
+        # Intentar convertir todas las columnas a tipo numérico, si es posible
+        for col in data.columns:
+            data[col] = pd.to_numeric(data[col], errors='coerce')
+
+        # Eliminar filas con valores no numéricos
+        data = data.dropna()
+
         st.header("1. Conjunto de Datos Cargado")
         st.info(f"Se ha cargado un conjunto de datos con **{data.shape[0]} muestras** y **{data.shape[1]} columnas**.")
 
