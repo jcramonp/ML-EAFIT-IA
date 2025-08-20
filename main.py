@@ -46,26 +46,24 @@ if uploaded_file is not None:
     try:
         data = pd.read_csv(uploaded_file)
         
-        # Intentar convertir todas las columnas a tipo numérico, si es posible
+        # Intentar convertir todas las columnas a tipo numérico, si es posible, y luego eliminar filas con NaN
         for col in data.columns:
             data[col] = pd.to_numeric(data[col], errors='coerce')
+        data = data.dropna()
+        
+        if data.shape[0] == 0:
+            st.warning("El dataset no contiene filas válidas después de limpiar los valores nulos.")
+            st.stop()
         
         st.header("1. Conjunto de Datos Cargado")
         st.info(f"Se ha cargado un conjunto de datos con **{data.shape[0]} muestras** y **{data.shape[1]} columnas**.")
 
         # Selector para que el usuario elija la columna objetivo
         target_column = st.selectbox("Selecciona la columna objetivo", options=data.columns)
-
+        
         # Separar características (X) y objetivo (y)
         X_df = data.drop(columns=[target_column])
         y_series = data[target_column]
-
-        # Eliminar filas con valores nulos solo en las columnas de interés
-        combined_data = pd.concat([X_df, y_series], axis=1).dropna()
-        X_df = combined_data.drop(columns=[target_column])
-        y_series = combined_data[target_column]
-        
-        st.info(f"Se han eliminado filas con valores nulos. El nuevo dataset tiene **{combined_data.shape[0]}** muestras.")
         
         # Obtener los nombres de las características y las clases
         feature_names = X_df.columns.tolist()
